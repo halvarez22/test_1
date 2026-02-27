@@ -1,0 +1,11 @@
+torch
+git+https://github.com/huggingface/transformers.git
+accelerate>=0.26.0
+fastapi
+uvicorn
+python-multipart
+pillow
+einops
+pypdf
+timm
+pdf2image

@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+sqlalchemy
+databases[sqlite]
+pydantic
+python-dotenv
+# sentence-transformers (comentado para build rápido)
+# sqlite-vec

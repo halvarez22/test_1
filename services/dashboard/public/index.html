@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LicitAI-LM | Centro de Inteligencia Legal</title>
+    <link rel="stylesheet" href="style.css?v=20260224c">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="dark-theme">
+    <div id="app">
+        <!-- Pantalla de Inicio: Galería de Cuadernos -->
+        <section id="galleryView" class="view">
+            <header class="gallery-header">
+                <div class="logo">Licit<span>AI</span>-LM</div>
+                <div class="header-actions">
+                    <button class="btn-primary" id="btnCreateNotebook">+ Crear cuaderno</button>
+                    <button class="btn-ghost" id="btnReindex" title="Reconstruir cuadernos desde disco">↻
+                        Reindexar</button>
+                    <div class="user-avatar">H</div>
+                </div>
+            </header>
+
+            <div class="gallery-content">
+                <h2>Mis cuadernos</h2>
+                <div class="notebook-grid" id="notebookGrid">
+                    <div class="notebook-card placeholder" id="cardCreateNew">
+                        <div class="plus-icon">+</div>
+                        <p>Crear cuaderno</p>
+                    </div>
+                    <!-- Los cuadernos se cargarán aquí -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Pantalla de Notebook (Detalle) -->
+        <section id="notebookView" class="view" style="display: none;">
+            <header class="notebook-header">
+                <div class="back-btn" id="btnBackToGallery">← Volver</div>
+                <div class="notebook-title">
+                    <h1 id="activeNotebookTitle">Nueva Licitación</h1>
+                    <span id="activeNotebookBadge">Borrador</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-ghost">Compartir</button>
+                    <button class="btn-ghost">Configuración</button>
+                    <div class="user-avatar">H</div>
+                </div>
+            </header>
+
+            <div class="notebook-layout">
+                <!-- Columna Izquierda: Fuentes -->
+                <aside class="column sources-col" id="colSources">
+                    <div class="col-header">
+                        <h3>Fuentes</h3>
+                        <div class="header-tools">
+                            <button class="btn-ghost-mini" id="btnProcessAll" title="Procesar todo">▶▶ Todo</button>
+                            <button class="btn-icon-plus" id="btnAddSource">+</button>
+                        </div>
+                    </div>
+                    <div class="source-list" id="sourceList">
+                        <p class="empty-msg">No hay fuentes cargadas</p>
+                    </div>
+                    <div class="source-upload-area" id="sourceUploadArea" style="display:none;">
+                        <input type="file" id="nbFileInput" multiple hidden>
+                        <div class="upload-box" id="nbDropZone">
+                            <p>Arrastra archivos aquí</p>
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="resizer" id="resizerSources"></div>
+
+                <!-- Columna Central: Chat y Resumen -->
+                <main class="column chat-col" id="colChat">
+                    <div class="chat-header-info">
+                        <div class="licit-info-bar">
+                            <div class="info-row">
+                                <span class="info-label">CONVOCANTE:</span>
+                                <span id="infoConvocante">-</span>
+                                <span class="info-sep">|</span>
+                                <span class="info-label">ID:</span>
+                                <span id="infoLicitonID">-</span>
+                                <span class="info-sep">|</span>
+                                <span class="info-label">MOTIVO:</span>
+                                <span id="infoObjeto">-</span>
+                                <span class="info-sep">|</span>
+                                <span class="info-label">PUBLICACIÓN:</span>
+                                <span id="infoFechaPub">-</span>
+                            </div>
+                            <div class="info-row highlight">
+                                <span class="info-label">LICITANTE:</span>
+                                <span id="infoEmpresa">-</span>
+                                <span class="info-sep">|</span>
+                                <span class="info-label">RFC:</span>
+                                <span id="infoRFC">-</span>
+                                <span class="info-sep">|</span>
+                                <span class="info-label">DOMICILIO:</span>
+                                <span id="infoDomicilio">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="bot-msg">
+                            <p>¡Hola! Soy tu asistente legal. Por favor carga tus fuentes para comenzar:</p>
+                            <div class="intel-status-list">
+                                <div class="intel-item pending" id="statusBase">
+                                    <span class="status-icon">📄</span>
+                                    <span class="status-text">Bases de la licitación</span>
+                                    <span class="status-check">✓</span>
+                                </div>
+                                <div class="intel-item pending" id="statusActa">
+                                    <span class="status-icon">📜</span>
+                                    <span class="status-text">Acta Constitutiva</span>
+                                    <span class="status-check">✓</span>
+                                </div>
+                                <div class="intel-item pending" id="statusCIF">
+                                    <span class="status-icon">🏛️</span>
+                                    <span class="status-text">CIF (Constancia de Situación Fiscal)</span>
+                                    <span class="status-check">✓</span>
+                                </div>
+                                <div class="intel-item pending" id="statusLogo">
+                                    <span class="status-icon">🖼️</span>
+                                    <span class="status-text">Logo corporativo</span>
+                                    <span class="status-check">✓</span>
+                                </div>
+                                <div class="intel-item pending" id="statusPrecios">
+                                    <span class="status-icon">💰</span>
+                                    <span class="status-text">Precios de tus productos</span>
+                                    <span class="status-check">✓</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chatInput" placeholder="Haz una pregunta sobre esta licitación...">
+                        <button id="btnClearChat" title="Limpiar chat">🗑</button>
+                        <button id="btnSendMessage">➔</button>
+                    </div>
+                </main>
+
+                <div class="resizer" id="resizerStudio"></div>
+
+                <!-- Columna Derecha: Studio / Detalles Finos -->
+                <aside class="column studio-col" id="colStudio">
+                    <div class="col-header">
+                        <h3>Studio</h3>
+                    </div>
+                    <div class="studio-cards">
+                        <!-- Tarjeta de Identidad de Empresa (aparece tras procesar CIF/Logo) -->
+                        <div class="studio-card" id="cardEmpresa"
+                            style="display:none; border: 1px solid rgba(99,102,241,0.4);">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <img id="empresaLogo" src="" alt="Logo"
+                                    style="height:40px; max-width:90px; object-fit:contain; display:none; border-radius:4px; background:#fff; padding:3px;">
+                                <div style="flex:1; min-width:0;">
+                                    <div
+                                        style="font-size:10px; color:var(--accent); font-weight:600; letter-spacing:0.05em; margin-bottom:2px;">
+                                        EMPRESA PARTICIPANTE</div>
+                                    <div id="empresaNombre"
+                                        style="font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        -</div>
+                                    <div id="empresaRFC"
+                                        style="font-size:11px; color:var(--text-secondary); margin-top:1px;">RFC: -
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); font-size:11px; color:var(--text-secondary); line-height:1.5;">
+                                <div>👤 <span id="empresaRep">-</span></div>
+                                <div>📍 <span id="empresaDom"
+                                        style="display:block; margin-top:2px; padding-left:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                                        title="">-</span></div>
+                            </div>
+                        </div>
+                        <!-- Inconsistencias (debajo de Empresa) -->
+                        <div class="studio-card" id="cardInconsistencias" style="display:none;">
+                            <div class="col-header-mini">
+                                <h4>⚠️ Inconsistencias</h4>
+                            </div>
+                            <div id="inconsistenciasList" class="audit-list">
+                                <p class="empty-msg-mini">Sin inconsistencias</p>
+                            </div>
+                            <div id="inconsistenciasDetails" style="display:none; margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                <div id="inconsistenciasDetailsBody" style="font-size:11px; color:var(--text-secondary); line-height:1.5;"></div>
+                            </div>
+                        </div>
+                        <div class="studio-card critical-warning" id="cardCriticalRules" style="display:none;">
+                            <h4>Reglas SINE QUA NON</h4>
+                            <div class="warning-list" id="criticalWarningsList">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                            <div id="criticalRulesDetails" style="display:none; margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                <div id="criticalRulesDetailsBody" style="font-size:11px; color:var(--text-secondary); line-height:1.5;"></div>
+                            </div>
+                        </div>
+                        <!-- Plan Maestro de Auditoría -->
+                        <div class="studio-card compliance-audit" id="cardComplianceAudit" style="display:none;">
+                            <h4>Plan Maestro de Auditoría</h4>
+                            <div class="audit-list" id="complianceChecklist">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                        <div class="studio-card" id="cardFianzas">
+                            <div class="card-icon">💰</div>
+                            <h4>Fianzas Solicitadas</h4>
+                            <p class="card-val">No detectado</p>
+                            <button class="edit-btn">✎</button>
+                        </div>
+                        <div class="studio-card" id="cardFechas">
+                            <div class="card-icon">📅</div>
+                            <h4>Cronograma</h4>
+                            <ul class="date-list">
+                                <li>Apertura: -</li>
+                                <li>Visita: -</li>
+                            </ul>
+                            <button class="edit-btn">✎</button>
+                        </div>
+                        <div class="studio-card" id="cardFormatos">
+                            <div class="card-icon">📂</div>
+                            <h4>Formatos Detectados</h4>
+                            <p class="card-val">No detectados</p>
+                            <button class="edit-btn">✎</button>
+                        </div>
+                        <div class="studio-card" id="cardCertificaciones">
+                            <div class="card-icon">📜</div>
+                            <h4>Certificaciones</h4>
+                            <p class="card-val">No detectado</p>
+                            <button class="edit-btn">✎</button>
+                        </div>
+                        <div class="studio-card" id="cardDocuments">
+                            <div class="col-header-mini">
+                                <h4>📄 Documentos</h4>
+                                <div class="header-tools">
+                                    <button class="btn-primary-mini" id="btnGenerateDocs">Redactar</button>
+                                    <button class="btn-ghost-mini" id="btnRefreshDocs" title="Sincronizar">↻</button>
+                                </div>
+                            </div>
+                            <!-- Progress area (hidden by default) -->
+                            <div id="genProgressArea" style="display:none; margin: 8px 0;">
+                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                                    <span class="spinner" id="genSpinner"></span>
+                                    <span id="genStatusText"
+                                        style="font-size:11px; color:var(--text-secondary); font-family:'Inter',sans-serif;">Iniciando...</span>
+                                </div>
+                                <div
+                                    style="width:100%; height:6px; background:rgba(255,255,255,0.07); border-radius:10px; overflow:hidden;">
+                                    <div id="genProgressBar"
+                                        style="height:6px; width:0%; background:linear-gradient(90deg, var(--accent), #a78bfa); border-radius:10px; transition: width 0.4s ease;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="generatedDocsList" class="doc-list-mini">
+                                <p class="empty-msg-mini">Sin documentos aún</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </div>
+
+    <!-- Overlay global para expansión de tarjetas -->
+    <div id="cardOverlay" style="display:none; position:fixed; inset:0; background:rgba(10,11,20,0.65); backdrop-filter: blur(3px); z-index:1000; align-items:center; justify-content:center;">
+        <div id="cardOverlayContent" style="background:#0f172a; color:var(--text-primary); border:1px solid rgba(99,102,241,0.6); border-radius:12px; width:50vw; height:50vh; box-shadow:0 20px 40px rgba(0,0,0,0.45); display:flex; flex-direction:column; overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div id="cardOverlayTitle" style="font-size:13px; font-weight:600; color:var(--text-primary);">Detalle</div>
+                <button id="cardOverlayClose" class="btn-ghost-mini" style="font-size:16px; line-height:16px;">×</button>
+            </div>
+            <div id="cardOverlayBody" style="padding:12px; font-size:12px; color:#e5e7eb; line-height:1.6; overflow:auto;"></div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalCreate" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Nuevo Cuaderno de Licitación</h2>
+            <input type="text" id="newNotebookName" placeholder="Ej: OPM-001-2026 Alumbrado Madera">
+            <div class="modal-actions">
+                <button class="btn-ghost" id="btnCancelCreate">Cancelar</button>
+                <button class="btn-primary" id="btnConfirmCreate">Crear</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20260227a"></script>
+</body>
+
+</html>

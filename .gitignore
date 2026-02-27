@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Node / Frontend
+node_modules/
+dist/
+.cache/
+
+# Envs / Secrets
+.env
+.env.*
+*.key
+*.pem
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# App Data (workspace outputs, binaries)
+data/workspaces/
+services/docx-gen/output/
+
+# Logs
+logs/
+*.log
+
+# Builds / Containers
+*.zip
+*.tar
+*.tar.gz
+
