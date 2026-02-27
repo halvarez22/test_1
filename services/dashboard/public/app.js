@@ -25,23 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let notebooks = JSON.parse(localStorage.getItem('licitai_notebooks')) || [];
-    const normalizeName = (s) => (s || '').trim().toLowerCase();
     const dedupeNotebooksList = (list) => {
-        const byName = new Map();
+        const byId = new Map();
         for (const nb of list) {
-            const key = normalizeName(nb.name);
-            const existing = byName.get(key);
-            if (!existing) {
-                byName.set(key, nb);
-            } else {
-                const score = (Array.isArray(nb.sources) ? nb.sources.length : 0) + (nb.analysis ? 100 : 0) + (parseInt(nb.id, 10) || 0);
-                const existingScore = (Array.isArray(existing.sources) ? existing.sources.length : 0) + (existing.analysis ? 100 : 0) + (parseInt(existing.id, 10) || 0);
-                if (score >= existingScore) byName.set(key, nb);
-            }
+            const key = String(nb.id);
+            if (!byId.has(key)) byId.set(key, nb);
         }
-        return Array.from(byName.values());
+        return Array.from(byId.values());
     };
-    // Dedupe inicial por nombre (insensible a mayúsculas/minúsculas)
     if (notebooks.length > 1) {
         notebooks = dedupeNotebooksList(notebooks);
         try { localStorage.setItem('licitai_notebooks', JSON.stringify(notebooks)); } catch (e) { }
