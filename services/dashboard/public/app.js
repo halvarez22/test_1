@@ -378,9 +378,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnProcessAll.onclick = async () => {
         if (!activeNotebook) return;
-        const pendings = activeNotebook.sources.filter(s => s.status === 'pending');
-        for (const s of pendings) {
-            await runAnalysis(s.id);
+        const confirmAll = confirm('Reprocesar todo volverá a ejecutar OCR/LLM y sobrescribirá resultados. ¿Deseas continuar?');
+        if (!confirmAll) return;
+        const includeExcels = confirm('¿Deseas incluir Excels y regenerar la Propuesta Económica (E2)? Presiona Cancelar para omitir Excels.');
+        const candidates = (activeNotebook.sources || []).filter(s => s && s.type && s.type !== 'raw');
+        for (const s of candidates) {
+            const isExcel = s.type === '/api/process-excel';
+            if (isExcel && !includeExcels) continue;
+            try {
+                await runAnalysis(s.id, { force: true, bulk: true });
+            } catch (e) {}
         }
     };
 
@@ -441,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const runAnalysis = async (sourceId) => {
+    const runAnalysis = async (sourceId, opts = {}) => {
         const src = activeNotebook.sources.find(s => s.id === sourceId);
         let file = fileStore.get(sourceId);
         const wsId = String(activeNotebook.id);
@@ -509,10 +516,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const endpoint = src.type;
 
         const sep = endpoint.includes('?') ? '&' : '?';
-        const forceParam = (src.status === 'done') ? '&force=true' : '&force=false';
+        const forceParam = opts.force ? '&force=true' : '&force=false';
         try {
             // === FLUJO ESPECIAL: Excel → Propuesta Económica ===
             if (endpoint === '/api/process-excel') {
+                if (opts.bulk) {
+                    // En reprocesado masivo ya preguntamos; si estamos aquí, el usuario eligió incluir Excels
+                } else {
                 const proceed = confirm(`Se detectó un Excel: "${src.name}".\n\n¿Deseas generar la Propuesta Económica (Documento E2) con este archivo?\n\nSi es un ANEXO de las bases (p.ej. "Anexo E", "Unidades a visitar"), elige "Cancelar" para no generar y tratarlo como referencia.`);
                 if (!proceed) {
                     src.type = 'raw';
@@ -522,6 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderSources();
                     addMessage(`ℹ️ El Excel "${src.name}" fue marcado como referencia. No se generó Propuesta Económica.`, 'bot');
                     return;
+                }
                 }
                 src.label = '📊 Interpretando hoja de cálculo...';
                 renderSources();
