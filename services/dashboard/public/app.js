@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveNotebooks();
         renderSources();
         // Procesamiento automático inmediato (evita tener que pulsar "Procesar")
-        if (newSource.type && newSource.type !== 'raw') {
+        if (newSource.type && newSource.type !== 'raw' && newSource.type !== '/api/process-excel') {
             try { await runAnalysis(sourceId); } catch (e) {}
         }
     };
@@ -513,6 +513,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // === FLUJO ESPECIAL: Excel → Propuesta Económica ===
             if (endpoint === '/api/process-excel') {
+                const proceed = confirm(`Se detectó un Excel: "${src.name}".\n\n¿Deseas generar la Propuesta Económica (Documento E2) con este archivo?\n\nSi es un ANEXO de las bases (p.ej. "Anexo E", "Unidades a visitar"), elige "Cancelar" para no generar y tratarlo como referencia.`);
+                if (!proceed) {
+                    src.type = 'raw';
+                    src.status = 'done';
+                    src.label = '📎 Excel de referencia (sin generar E2)';
+                    saveNotebooks();
+                    renderSources();
+                    addMessage(`ℹ️ El Excel "${src.name}" fue marcado como referencia. No se generó Propuesta Económica.`, 'bot');
+                    return;
+                }
                 src.label = '📊 Interpretando hoja de cálculo...';
                 renderSources();
                 addMessage(`📊 Procesando cotización <strong>${src.name}</strong>... Generando Propuesta Económica.`, 'bot');
