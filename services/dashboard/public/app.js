@@ -409,11 +409,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls');
         const isImage = fn.endsWith('.jpg') || fn.endsWith('.jpeg') || fn.endsWith('.png');
         const isLogo = fn.includes('logo') || fn.includes('firma');
+        const isEconomicExcel = (name) => {
+            const allow = ["presupuesto", "cotizacion", "cotización", "costos", "propuesta economica", "propuesta económica", "e2", "precio unitario", "cuantificación", "cuantificacion"];
+            const deny = ["anexo", "unidades a visitar", "unidades", "visitar", "catalogo", "catálogo", "padron", "padrón", "inventario", "lista", "cronograma", "calendario"];
+            const n = name.toLowerCase();
+            if (deny.some(k => n.includes(k))) return false;
+            return allow.some(k => n.includes(k));
+        };
 
         let type = 'raw';
         if (isExcel) {
-            // Archivos Excel → Propuesta Económica (DOCUMENTO E2)
-            type = '/api/process-excel';
+            // Solo Excel con intención económica clara → Propuesta Económica (DOCUMENTO E2)
+            if (isEconomicExcel(fn)) {
+                type = '/api/process-excel';
+            } else {
+                type = 'raw';
+            }
         } else if (isPdf || isTxt) {
             // Classify by filename keywords — works for both .pdf and .txt
             if (fn.includes('cif') || fn.includes('situacion_fiscal') || fn.includes('constancia')) {
@@ -435,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: file.name,
             type: type,
             status: (type === 'raw') ? 'done' : 'pending',
-            label: isExcel ? '📊 Cotización lista para procesar' : '📎 Archivo'
+            label: isExcel ? (type === '/api/process-excel' ? '📊 Cotización lista para procesar' : '📎 Excel de anexo (referencia)') : '📎 Archivo'
         };
 
         fileStore.set(sourceId, file);
@@ -464,9 +475,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const isPdf = fn.endsWith('.pdf');
             const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls');
             if (isExcel) {
-                src.type = '/api/process-excel';
-                src.status = 'pending';
-                src.label = '📊 Cotización lista para procesar';
+                const isEconomicExcel = (name) => {
+                    const allow = ["presupuesto", "cotizacion", "cotización", "costos", "propuesta economica", "propuesta económica", "e2", "precio unitario", "cuantificación", "cuantificacion"];
+                    const deny = ["anexo", "unidades a visitar", "unidades", "visitar", "catalogo", "catálogo", "padron", "padrón", "inventario", "lista", "cronograma", "calendario"];
+                    const n = name.toLowerCase();
+                    if (deny.some(k => n.includes(k))) return false;
+                    return allow.some(k => n.includes(k));
+                };
+                if (isEconomicExcel(fn)) {
+                    src.type = '/api/process-excel';
+                    src.status = 'pending';
+                    src.label = '📊 Cotización lista para procesar';
+                } else {
+                    src.type = 'raw';
+                    src.status = 'done';
+                    src.label = '📎 Excel de anexo (referencia)';
+                }
                 saveNotebooks();
             } else if (isPdf || isTxt) {
                 if (fn.includes('cif') || fn.includes('situacion_fiscal') || fn.includes('constancia')) {
