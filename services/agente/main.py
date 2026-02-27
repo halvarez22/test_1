@@ -281,63 +281,97 @@ async def compliance_apply(req: ComplianceRequest):
             fianzas_val = analysis.get("fianzas_requeridas")
             det_fianzas = bool(fianzas_val) or has_any(["fianza", "garantia", "garantía"])
             items = []
-            items.append({
-                "punto": "Presentar documentos obligatorios.",
-                "motivo_riesgo": "No cumplir con requisitos de fondo.",
-                "accion_preventiva": "Verificar y presentar documentos obligatorios.",
-                "detectado": has_any(["base", "convocatoria", "anexo", "formato"]),
-                "sugerido": False,
-                "evidencia": evidence_for(["base", "convocatoria"])
-            })
-            items.append({
-                "punto": "Entregar fianzas requeridas.",
-                "motivo_riesgo": "No entregar fianzas requeridas.",
-                "accion_preventiva": "Verificar y entregar fianzas requeridas.",
-                "detectado": det_fianzas,
-                "sugerido": not det_fianzas,
-                "evidencia": evidence_for(["fianza", "garantia", "garantía"])
-            })
-            items.append({
-                "punto": "Adjuntar Constancia de Situación Fiscal (CIF).",
-                "motivo_riesgo": "Identidad fiscal no verificada.",
-                "accion_preventiva": "Anexar la CIF vigente del licitante.",
-                "detectado": has_any(["cif", "fiscal", "constancia"]),
-                "sugerido": not has_any(["cif", "fiscal", "constancia"]),
-                "evidencia": evidence_for(["cif", "fiscal", "constancia"])
-            })
-            items.append({
-                "punto": "Adjuntar Acta Constitutiva y poderes.",
-                "motivo_riesgo": "Representación legal no acreditada.",
-                "accion_preventiva": "Anexar acta y poderes del representante.",
-                "detectado": has_any(["acta", "constitutiva", "escritura"]),
-                "sugerido": not has_any(["acta", "constitutiva", "escritura"]),
-                "evidencia": evidence_for(["acta", "constitutiva", "escritura"])
-            })
-            items.append({
-                "punto": "Firmar todas las fojas y el sobre.",
-                "motivo_riesgo": "Descalificación por falta de firma.",
-                "accion_preventiva": "Verificar firma en cada foja y sobre.",
-                "detectado": False,
-                "sugerido": True,
-                "evidencia": None
-            })
-            lugar = crit.get("lugar_entrega")
-            items.append({
-                "punto": "Entrega física en el lugar y fecha señalados.",
-                "motivo_riesgo": "Entrega fuera de tiempo o sede.",
-                "accion_preventiva": "Confirmar sede y horario de entrega.",
-                "detectado": bool(lugar),
-                "sugerido": not bool(lugar),
-                "evidencia": lugar
-            })
-            items.append({
-                "punto": "Propuesta en idioma español.",
-                "motivo_riesgo": "Rechazo por idioma incorrecto.",
-                "accion_preventiva": "Redactar toda la propuesta en español.",
-                "detectado": idioma_detectado,
-                "sugerido": not idioma_detectado,
-                "evidencia": None
-            })
+            # Base (aplica a todos)
+            base_items = [
+                {
+                    "punto": "Presentar documentos obligatorios.",
+                    "motivo_riesgo": "No cumplir con requisitos de fondo.",
+                    "accion_preventiva": "Verificar y presentar documentos obligatorios.",
+                    "detectado": has_any(["base", "convocatoria", "anexo", "formato"]),
+                    "sugerido": False,
+                    "evidencia": evidence_for(["base", "convocatoria"])
+                },
+                {
+                    "punto": "Entregar fianzas requeridas.",
+                    "motivo_riesgo": "No entregar fianzas requeridas.",
+                    "accion_preventiva": "Verificar y entregar fianzas requeridas.",
+                    "detectado": det_fianzas,
+                    "sugerido": not det_fianzas,
+                    "evidencia": evidence_for(["fianza", "garantia", "garantía"])
+                },
+                {
+                    "punto": "Adjuntar Constancia de Situación Fiscal (CIF).",
+                    "motivo_riesgo": "Identidad fiscal no verificada.",
+                    "accion_preventiva": "Anexar la CIF vigente del licitante.",
+                    "detectado": has_any(["cif", "fiscal", "constancia"]),
+                    "sugerido": not has_any(["cif", "fiscal", "constancia"]),
+                    "evidencia": evidence_for(["cif", "fiscal", "constancia"])
+                },
+                {
+                    "punto": "Adjuntar Acta Constitutiva y poderes.",
+                    "motivo_riesgo": "Representación legal no acreditada.",
+                    "accion_preventiva": "Anexar acta y poderes del representante.",
+                    "detectado": has_any(["acta", "constitutiva", "escritura"]),
+                    "sugerido": not has_any(["acta", "constitutiva", "escritura"]),
+                    "evidencia": evidence_for(["acta", "constitutiva", "escritura"])
+                },
+                {
+                    "punto": "Propuesta en idioma español.",
+                    "motivo_riesgo": "Rechazo por idioma incorrecto.",
+                    "accion_preventiva": "Redactar toda la propuesta en español.",
+                    "detectado": idioma_detectado,
+                    "sugerido": not idioma_detectado,
+                    "evidencia": None
+                }
+            ]
+            items.extend(base_items)
+            # Especialización por entidad/procedimiento
+            ent = entidad
+            if "federal" in ent or "electronica" in ent or "electrónica" in ent:
+                # Reglas para procedimiento electrónico federal
+                items.append({
+                    "punto": "RUPC activo y vigente.",
+                    "motivo_riesgo": "No podrás presentar proposiciones en plataformas federales.",
+                    "accion_preventiva": "Verificar estatus RUPC en ComprasMX.",
+                    "detectado": False,
+                    "sugerido": True,
+                    "evidencia": None
+                })
+                items.append({
+                    "punto": "Firmar electrónicamente las proposiciones.",
+                    "motivo_riesgo": "Descalificación por no firmar electrónicamente.",
+                    "accion_preventiva": "Verificar certificado/e.firma vigente del representante.",
+                    "detectado": False,
+                    "sugerido": True,
+                    "evidencia": None
+                })
+                items.append({
+                    "punto": "Enviar proposiciones vía ComprasMX en tiempo y forma.",
+                    "motivo_riesgo": "Rechazo por envío fuera de ventana o canal incorrecto.",
+                    "accion_preventiva": "Programar carga y validar ventana de envío en plataforma.",
+                    "detectado": True,
+                    "sugerido": False,
+                    "evidencia": "Plataforma ComprasMX"
+                })
+            elif "local_presencial" in ent or "presencial" in ent:
+                # Reglas para procedimientos presenciales
+                items.append({
+                    "punto": "Firmar todas las fojas y el sobre.",
+                    "motivo_riesgo": "Descalificación por falta de firma física.",
+                    "accion_preventiva": "Verificar firma en cada foja y sobre sellado.",
+                    "detectado": False,
+                    "sugerido": True,
+                    "evidencia": None
+                })
+                lugar = crit.get("lugar_entrega")
+                items.append({
+                    "punto": "Entrega física en el lugar y fecha señalados.",
+                    "motivo_riesgo": "Entrega fuera de tiempo o sede.",
+                    "accion_preventiva": "Confirmar sede y horario de entrega.",
+                    "detectado": bool(lugar),
+                    "sugerido": not bool(lugar),
+                    "evidencia": lugar
+                })
             analysis["checklist_cumplimiento"] = items
             payload = {
                 "id": ws["id"],

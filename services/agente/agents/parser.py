@@ -189,8 +189,24 @@ FORMATO DE RESPUESTA — SOLO JSON, SIN TEXTO ADICIONAL:
                     }
                 }
                 
-                # Merge con defaults para garantizar llaves
                 final_analysis = {**defaults, **analysis}
+                try:
+                    from .template_selector import classify_procedure
+                    sel = classify_procedure(clean_text)
+                    tp = sel.get("tipo_procedimiento")
+                    te = sel.get("tipo_entidad")
+                    if tp:
+                        pc = final_analysis.get("puntos_criticos") or {}
+                        pc["tipo_procedimiento"] = tp
+                        if tp == "electrónico":
+                            pc["dirigido_a"] = "NO APLICA - Procedimiento 100% electrónico vía ComprasMX"
+                            pc["firma_requerida"] = "NO APLICA - Procedimiento 100% electrónico vía ComprasMX"
+                            pc["lugar_entrega"] = "NO APLICA - Procedimiento 100% electrónico vía ComprasMX"
+                        final_analysis["puntos_criticos"] = pc
+                    if te:
+                        final_analysis["tipo_entidad"] = te
+                except Exception:
+                    pass
                 
                 await self.emit_progress(progress_callback, 100, "Análisis documental completado.")
                 return final_analysis
